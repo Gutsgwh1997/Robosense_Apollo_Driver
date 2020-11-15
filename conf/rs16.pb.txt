@@ -1,0 +1,16 @@
+model: "RS16"
+frame_id: "rs16"
+ip: "192.168.1.202"
+msop_port: 6701
+difop_port: 7790
+start_angle: 0
+end_angle: 360
+min_distance: 0
+max_distance: 200
+split_frame_mode: 1
+num_pkts_split: 1
+cut_angle: 0
+angle_path: "/apollo/modules/drivers/robosense/16angle.csv"
+pointcloud_channel: "/apollo/sensor/rs16/PointCloud2"
+scan_channel: "/apollo/sensor/rs16/Scan"
+use_lidar_clock: false
