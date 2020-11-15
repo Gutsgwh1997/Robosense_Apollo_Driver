@@ -1,8 +1,8 @@
 model: "RS32"
 frame_id: "RS32"
 ip: "192.168.1.200"
-msop_port: 6699
-difop_port: 7788
+msop_port: 2000
+difop_port:2001
 start_angle: 0
 end_angle: 360
 min_distance: 0
