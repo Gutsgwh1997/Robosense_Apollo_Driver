@@ -60,6 +60,11 @@ void LidarMsgCallBack(const std::shared_ptr<PointCloud_withFullInfo>& msg) {
     pcl_ptr->points[i].ring = point.ring();
     pcl_ptr->points[i].timestamp = point.timestamp();
 
+    if (point.x() == 0.001 && point.y() == 0.001 && point.z() == 0.001 && point.intensity() == 0) {
+        pcl_ptr->points[i].x = NAN;
+        pcl_ptr->points[i].y = NAN;
+        pcl_ptr->points[i].z = NAN;
+    }
     // 测试每个点的时间戳，具体点的时间戳是一个packet一变
     // if (count == 10) {
     //   lidarIndex_ << point.timestamp() << " ";
