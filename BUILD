@@ -117,6 +117,7 @@ cc_binary(
             "//modules/drivers/robosense/proto:robosense_proto",
             "//modules/drivers/proto:sensor_proto",
             "//modules/drivers/gnss/proto:gnss_proto",
+            "//modules/localization/proto:localization_proto",
           ],
 )
 

@@ -55,15 +55,39 @@ struct ImuData {
   double wy;                  // y轴向的角速度分量
   double wz;                  // z轴向的角速度分量
 };
-ostream& operator<<(ostream& out, const ImuData& imumsg){
-  out << setiosflags(ios::fixed) << setprecision(9) << imumsg.measurement_time << " ";
-  out << imumsg.ax << " " << imumsg.ay << " " << imumsg.az << " ";
-  out << imumsg.wx << " " << imumsg.wy << " " << imumsg.wz << endl;
-  return out;
+ostream& operator<<(ostream& out, const ImuData& imumsg) {
+    out << setiosflags(ios::fixed) << setprecision(9) << imumsg.measurement_time << " ";
+    out << imumsg.ax << " " << imumsg.ay << " " << imumsg.az << " ";
+    out << imumsg.wx << " " << imumsg.wy << " " << imumsg.wz << endl;
+    return out;
 }
-istream& operator>>(istream& in, ImuData& imumsg){
-  in >> imumsg.measurement_time;
-  in >> imumsg.ax >> imumsg.ay >> imumsg.az;
-  in >> imumsg.wx >> imumsg.wy >> imumsg.wz;
-  return in;
+istream& operator>>(istream& in, ImuData& imumsg) {
+    in >> imumsg.measurement_time;
+    in >> imumsg.ax >> imumsg.ay >> imumsg.az;
+    in >> imumsg.wx >> imumsg.wy >> imumsg.wz;
+    return in;
+}
+
+struct PoseData {
+  double measurement_time;    // 硬件返回的时间(s)
+  double x;                   // xyz的位移
+  double y;                   
+  double z;                    
+  double qw;                  // 四元数表示的旋转
+  double qx;
+  double qy;                 
+  double qz;                
+};
+ostream& operator<<(ostream& out, const PoseData& posemsg) {
+    out << setiosflags(ios::fixed) << setprecision(9) << posemsg.measurement_time << " ";
+    out << posemsg.x << " " << posemsg.y << " " << posemsg.z << " ";
+    out << posemsg.qw << " " << posemsg.qx << " " << posemsg.qy << " " << posemsg.qz << endl;
+    return out;
+}
+istream& operator>>(istream& in, PoseData& posemsg) {
+    in >> posemsg.measurement_time;
+    in >> posemsg.x >> posemsg.y >> posemsg.z;
+    in >> posemsg.qw >> posemsg.qx >> posemsg.qy >> posemsg.qz;
+
+    return in;
 }

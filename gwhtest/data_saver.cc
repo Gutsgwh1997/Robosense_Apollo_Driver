@@ -1,4 +1,5 @@
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <assert.h>
@@ -14,6 +15,7 @@
 #include "modules/drivers/robosense/proto/pointcloud_withfullinfo.pb.h"
 #include "modules/drivers/proto/sensor_image.pb.h"
 #include "modules/drivers/gnss/proto/imu.pb.h"
+#include "modules/localization/proto/localization.pb.h"
 #include "modules/drivers/robosense/gwhtest/help.hpp"
 
 using namespace std;
@@ -25,15 +27,18 @@ using apollo::drivers::PointXYZIT;
 using apollo::drivers::robosense::PointCloud_withFullInfo;
 using apollo::drivers::Image;
 using apollo::drivers::gnss::Imu;
+using apollo::localization::LocalizationEstimate;
 
 void removeAllFilesInUnemptyDir(const string& dir);
 
 // 全局变量设定区
 string pointCloudSaveDir_ = "/apollo/data/gwh/rs32_pointCloud/";
 string imuSaveDir_ = "/apollo/data/gwh/imu/";
+string rtkSaveDir_ = "/apollo/data/gwh/rtk/";
 string imgSaveDir_ = "/apollo/data/gwh/img/";
 ofstream lidarIndex_;
 ofstream imuIndex_;
+ofstream rtkIndex_;
 ofstream imgIndex_;
 
 /**
@@ -109,7 +114,7 @@ void LidarMsgCallBack(const std::shared_ptr<PointCloud_withFullInfo>& msg) {
   // gettimeofday(&after, NULL);
   // double time_consume = ((double)(after.tv_sec - before.tv_sec) + (double)(after.tv_usec - before.tv_usec) / 1e6) * 1000;
 
-  BOLD_YELLOW << "Saved " << setfill('0') << setw(6) << ++count<<" lidar frames, timestamp: ";
+  BOLD_YELLOW << "Saved " << setfill('0') << setw(6) << ++count<<" unordered lidar frames, timestamp: ";
   BOLD_YELLOW << setiosflags(ios::fixed) << setprecision(3) << measurement_time2 << ENDL;
   // std::cout << "Point cloud width: " << msg->width() << " height: " << msg->height() << " size: " << msg->point_size() << std::endl;
   return;
@@ -181,31 +186,59 @@ void ImuMsgCallBack(const std::shared_ptr<Imu>& msg){
   BOLD_WHITE << "timestamp: " << setiosflags(ios::fixed) << setprecision(3) << measurement_time2 << ENDL;
 }
 
+/**
+ * @brief 定位模块pose回调函数
+ */
+void PoseMsgCallBack(const std::shared_ptr<LocalizationEstimate>& msg){
+    static size_t count = 0;
+    // 消息发布的时间
+    double measurement_time = msg->mutable_header()->timestamp_sec();
+    PoseData posemsg;
+    posemsg.measurement_time = msg->mutable_header()->timestamp_sec();
+    posemsg.x = msg->pose().position().x();
+    posemsg.y = msg->pose().position().y();
+    posemsg.z = msg->pose().position().z();
+    posemsg.qw = msg->pose().orientation().qw();
+    posemsg.qx = msg->pose().orientation().qx();
+    posemsg.qy = msg->pose().orientation().qy();
+    posemsg.qz = msg->pose().orientation().qz();
+
+    rtkIndex_<<posemsg;
+    BOLD_BLUE << "Saved "<< setfill('0') << setw(6)<< ++count <<" pose frames, ";
+    BOLD_BLUE << "timestamp: " << setiosflags(ios::fixed) << setprecision(3) << measurement_time << ENDL;
+}
+
 int main(int argc, char* argv[]) {
     apollo::cyber::Init(argv[0]);
 
     removeAllFilesInUnemptyDir(pointCloudSaveDir_);
     removeAllFilesInUnemptyDir(imuSaveDir_);
     removeAllFilesInUnemptyDir(imgSaveDir_);
+    removeAllFilesInUnemptyDir(rtkSaveDir_);
 
     string lidarFile = pointCloudSaveDir_ + "lidar.txt";
     string imuFile = imuSaveDir_ + "imu.txt";
     string imgFile = imgSaveDir_ + "img.txt";
+    string rtkFile = rtkSaveDir_ + "pose.txt";
 
     lidarIndex_.open(lidarFile);
     imuIndex_.open(imuFile);
     imgIndex_.open(imgFile);
+    rtkIndex_.open(rtkFile);
 
     auto listener_node = apollo::cyber::CreateNode("data_saver");
 
     auto lidar_listener = listener_node->CreateReader<PointCloud_withFullInfo>("/apollo/sensor/rs32/PointCloud2_withFullInfo", LidarMsgCallBack);
     auto img_listener = listener_node->CreateReader<Image>("/apollo/sensor/camera/front_6mm/image", ImgMsgCallBack);
     auto imu_listener = listener_node->CreateReader<Imu>("/apollo/sensor/gnss/imu", ImuMsgCallBack);
+    auto pose_listener = listener_node->CreateReader<LocalizationEstimate>("/apollo/localization/pose", PoseMsgCallBack);
+
     apollo::cyber::WaitForShutdown();
 
     lidarIndex_.close();
     imuIndex_.close();
     imgIndex_.close();
+    rtkIndex_.close();
 
     return 0;
 }
